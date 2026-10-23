@@ -95,6 +95,18 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .grade .g-row .gd{color:var(--sub)}
 .grade .ok{color:var(--calm);font-weight:700} .grade .ng{color:var(--faint);font-weight:700}
 
+/* 아침 알림 */
+.bell{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:20px;padding:14px 16px;margin-bottom:12px}
+.bell .ic{width:38px;height:38px;border-radius:12px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.bell .tx{flex:1;min-width:0}
+.bell .t1{font-size:15px;font-weight:700}
+.bell .t2{font-size:12.5px;color:var(--dim);margin-top:1px;line-height:1.45}
+.bell .btn{border:0;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0}
+.bell .btn.pri{background:var(--blue);color:#fff}
+.bell .btn.sec{background:var(--chip);color:var(--sub);padding:8px 11px;font-size:13px}
+.bell .btns{display:flex;gap:6px;flex-shrink:0}
+.bell .btn:disabled{opacity:.5}
+
 /* 2주 흐름 */
 .bars{display:flex;align-items:flex-end;gap:5px;height:110px;padding-top:6px}
 .bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
@@ -129,6 +141,12 @@ details .inner{margin-top:14px}
   </header>
 
   <div class="err" id="err"></div>
+
+  <div class="bell" id="bell" style="display:none">
+    <div class="ic">🔔</div>
+    <div class="tx"><div class="t1" id="bell-t1">평일 아침 7:30 알림</div><div class="t2" id="bell-t2">어젯밤 미국 → 오늘 한국 시가를 폰으로</div></div>
+    <div class="btns" id="bell-btns"></div>
+  </div>
 
   <!-- 1. 오늘 한 줄 -->
   <section class="card hero">
@@ -385,6 +403,57 @@ function sayLine(key,x,A){
   }
   return `특별한 쏠림이 없는 날이다. 미국 옵션 쪽에서 오는 신호는 약하니까 <b>다른 근거로 판단</b>하면 된다.`;
 }
+
+/* ───────── 아침 알림 (웹 푸시) ───────── */
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const canPush='serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+let swReg=null;
+function b64ToU8(b){const p='='.repeat((4-b.length%4)%4);const r=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))}
+function bell(t1,t2,btns){$('bell').style.display='';$('bell-t1').textContent=t1;$('bell-t2').textContent=t2;$('bell-btns').innerHTML=btns}
+async function bellInit(){
+  if(!canPush){
+    if(isIOS&&!standalone)bell('아침 알림 받으려면','공유 버튼 → "홈 화면에 추가" 후, 홈 화면 아이콘으로 열어줘','');
+    return;
+  }
+  try{swReg=await navigator.serviceWorker.register('/sw.js')}catch(e){return}
+  if(Notification.permission==='denied'){bell('알림이 막혀 있다','폰 설정 → 알림에서 이 앱을 허용해줘','');return}
+  const sub=await swReg.pushManager.getSubscription();
+  if(sub){
+    // 서버 쪽 등록이 날아갔을 수도 있으니 열 때마다 조용히 다시 등록
+    fetch('/api/push/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:sub})}).catch(()=>{});
+    bell('아침 알림 켜짐','평일 7:30 · 어젯밤 미국이 쉬면 안 보냄','<button class="btn sec" onclick="bellTest(this)">테스트</button><button class="btn sec" onclick="bellOff(this)">끄기</button>');
+  } else {
+    bell('평일 아침 7:30 알림','어젯밤 미국 → 오늘 한국 시가를 폰으로','<button class="btn pri" onclick="bellOn(this)">켜기</button>');
+  }
+}
+async function bellOn(btn){
+  btn.disabled=true;
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){bellInit();return}
+    const {publicKey}=await (await fetch('/api/push/key')).json();
+    const sub=await swReg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToU8(publicKey)});
+    const r=await fetch('/api/push/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:sub})});
+    if(!r.ok)throw new Error('등록 실패');
+    await bellInit();
+    bellTest(null);
+  }catch(e){btn.disabled=false;$('bell-t2').textContent='켜기 실패: '+e.message}
+}
+async function bellTest(btn){
+  if(btn)btn.disabled=true;
+  const sub=await swReg.pushManager.getSubscription(); if(!sub)return;
+  const r=await fetch('/api/push/test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})}).then(r=>r.json()).catch(()=>({}));
+  $('bell-t2').textContent=r.result==='sent'?'테스트 알림 보냈다. 몇 초 안에 뜬다':'테스트 실패: '+(r.error||r.result||'네트워크');
+  if(btn)setTimeout(()=>btn.disabled=false,3000);
+}
+async function bellOff(btn){
+  btn.disabled=true;
+  const sub=await swReg.pushManager.getSubscription();
+  if(sub){await fetch('/api/push/unsubscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})}).catch(()=>{});await sub.unsubscribe()}
+  bellInit();
+}
+bellInit();
 
 loadAll();
 setInterval(()=>{if(document.visibilityState==='visible')loadAll()},10*60*1000);
