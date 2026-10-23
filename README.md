@@ -2,18 +2,30 @@
 
 미국 옵션 변동성 지표(VIX · VIX9D · VIX3M · VVIX · SKEW · SPX · SOX)로 종합 시그널을 매기고, 그 시그널이 과거에 실제로 어땠는지와 다음 날 한국 시가 영향을 보여주는 웹앱.
 
-- 사이트: https://delightful-llama-95af55.netlify.app
+- 사이트: https://us-vix-dashboard.netlify.app
 
 ## 구조
 
 ```
-public/index.html                       화면 (v5.0)
-public/stats-fallback.json              성적표 예비본 (서버 수집이 막힐 때 사용)
-netlify/functions/options-data.mts      실시간 지표 → /api/options-data  (CDN 10분 캐시)
-netlify/functions/stats.mts             15년 성적표 + 한국 모델 → /api/stats (CDN 12시간 캐시)
-scripts/build_fallback.mjs              stats-fallback.json 다시 만들기
-scripts/fetch_history.mjs               분석용 원자료 내려받기
+public/index.html                  메인 화면 (토스 스타일)
+public/record.html                 기록: 그날 아침 예상 vs 실제 채점
+public/classic.html                예전 화면
+public/sw.js · manifest            홈 화면 앱 + 푸시 알림
+public/stats-fallback.json         성적표 예비본 (서버 수집이 막힐 때)
+netlify/functions/options-data.mts 실시간 지표 → /api/options-data (10분 캐시)
+netlify/functions/stats.mts        15년 성적표·한국 모델·경로·재구성 채점 → /api/stats (12시간 캐시)
+netlify/functions/record.mts       실기록+재구성 병합 채점 → /api/record
+netlify/functions/push.mts         알림 등록 API → /api/push/*
+netlify/functions/push-morning.mts 평일 07:30 KST 예약: 그날 예상 기록(Blobs log/날짜) + 알림 발송
+netlify/lib/                       공용 (푸시·브리핑·채점)
 ```
+
+## 매일 아침 자동 흐름
+
+1. 07:30 KST(월~금) `push-morning`이 돈다. 어젯밤 미국이 쉬었으면 아무것도 안 한다.
+2. 그날 예상(시그널, 시가 예상, 범위, 오를 확률, 보낸 문구)을 Blobs `log/YYYY-MM-DD`에 기록한다. 이게 **실기록**이다.
+3. 알림을 켠 폰이 있으면 `[오로라 #순번 · 날짜 한국 아침]` 푸시를 보낸다.
+4. 한국장이 끝나면 `/api/record`가 실제 시가·종가로 채점한다. 실기록이 쌓이기 전 1년은 그날 이전 데이터만 쓴 **재구성** 기록으로 채운다.
 
 ## 성적표 (/api/stats)
 

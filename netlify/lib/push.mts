@@ -4,7 +4,8 @@ import webpush from "web-push"
 import { getStore } from "@netlify/blobs"
 import { createHash } from "node:crypto"
 
-export const SITE = "https://delightful-llama-95af55.netlify.app"
+// 사이트 주소: 넷리파이가 주는 값을 우선 쓰고, 없을 때만 고정값 (사이트 이름을 바꿔도 따라감)
+export const SITE = (globalThis as any).Netlify?.env?.get("URL") || "https://us-vix-dashboard.netlify.app"
 const store = () => getStore({ name: "aurora-push", consistency: "strong" })
 
 type Keys = { publicKey: string; privateKey: string }
