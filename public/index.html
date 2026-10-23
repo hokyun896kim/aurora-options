@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f2f4f6">
 <title>오로라 · 미국 공포 → 한국 아침</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="오로라">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
 :root{
@@ -73,6 +80,21 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .odds .base{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--text);border-radius:2px}
 .odds .meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim)}
 
+/* 경로 그래프 */
+.path svg{width:100%;height:auto;display:block;overflow:visible}
+.path .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.path-cap{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.55}
+.sub-h{font-size:14px;font-weight:700;color:var(--sub);margin:22px 0 2px;padding-top:18px;border-top:1px solid var(--line)}
+/* 자가채점 */
+.grade{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.grade summary .gl{font-size:14px;font-weight:600}
+.grade summary .gl b{font-size:17px}
+.grade .gsub{font-size:12.5px;color:var(--dim);margin-top:2px}
+.grade .g-row{display:flex;justify-content:space-between;font-size:13.5px;padding:9px 0}
+.grade .g-row+.g-row{border-top:1px solid var(--line)}
+.grade .g-row .gd{color:var(--sub)}
+.grade .ok{color:var(--calm);font-weight:700} .grade .ng{color:var(--faint);font-weight:700}
+
 /* 2주 흐름 */
 .bars{display:flex;align-items:flex-end;gap:5px;height:110px;padding-top:6px}
 .bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
@@ -133,11 +155,18 @@ details .inner{margin-top:14px}
     <div class="row"><div class="l"><div class="name">SK하이닉스</div><div class="desc" id="kr-hy-d">&nbsp;</div></div><div class="r"><div class="val num" id="kr-hy">--</div></div></div>
     <div class="row"><div class="l"><div class="name">하루 흔들림</div><div class="desc" id="kr-rng-d">코스피 고가와 저가 차이</div></div><div class="r"><div class="val num" id="kr-rng">--</div></div></div>
     <div class="foot" id="kr-foot">&nbsp;</div>
+    <details class="grade" id="grade" style="display:none">
+      <summary><div><div class="gl" id="grade-line">이 예상, 얼마나 맞았나</div><div class="gsub" id="grade-sub"></div></div><span class="arrow">▼</span></summary>
+      <div class="inner" id="grade-list"></div>
+    </details>
   </section>
 
   <!-- 3. 지난 15년 -->
   <section class="card">
     <h2 id="past-title">지난 15년, 같은 날 뒤에는</h2>
+    <div class="cap" id="path-cap">이런 날이 시작된 첫날부터 코스피 20거래일 평균 경로</div>
+    <div class="path"><div id="path-svg"></div><div class="chips" id="path-chips"></div></div>
+    <div class="sub-h">이런 날 전체로 보면</div>
     <div class="cap" id="past-cap">까만 선은 평소 확률이다. 막대가 선보다 길면 평소보다 잘 올랐다는 뜻이다.</div>
     <div id="odds"></div>
     <div class="foot" id="past-foot">&nbsp;</div>
@@ -275,6 +304,27 @@ function render(){
     $('past-foot').textContent=`${STATS.period.from.slice(0,4)}년부터 ${x.days}일(따로 떨어진 사건 ${x.events}번)의 실제 결과다. 예측이 아니라 기록이다.`;
   }
 
+  // 경로 그래프
+  if(STATS&&STATS.paths){
+    const P=STATS.paths[S.key], B=STATS.paths.all;
+    if(P){
+      $('path-svg').innerHTML=pathSVG(P.avg,B.avg,mood.cls);
+      const low=Math.min(...P.avg), lowAt=P.avg.indexOf(low);
+      $('path-chips').innerHTML=`<span class="chip ${mood.cls}">사건마다 바닥은 보통 ${Math.round(P.low_day_med)}거래일째</span><span class="chip">20거래일 뒤 플러스로 끝난 사건 ${P.end_up}%</span>`;
+      $('path-cap').textContent=`'${mood.chip}'이 시작된 첫날부터 코스피 20거래일 평균 · 과거 ${P.n}번`;
+    } else {$('path-svg').innerHTML='';$('path-chips').innerHTML='';$('path-cap').textContent='사건이 적어서 경로를 못 그린다'}
+  }
+
+  // 자가채점
+  const SC=STATS&&STATS.self_check;
+  if(SC&&SC.d20&&SC.d20.kospi){
+    $('grade').style.display='';
+    const g=SC.d20, g6=SC.d60;
+    $('grade-line').innerHTML=`최근 20일 코스피 방향 <b class="num">${g.kospi.dir_hit}%</b> 맞춤`;
+    $('grade-sub').textContent=`삼성 ${g.ss?g.ss.dir_hit+'%':'--'} · 하이닉스 ${g.hy?g.hy.dir_hit+'%':'--'} · 60일로 보면 코스피 ${g6.kospi.dir_hit}% · 그날 이전 데이터로만 예상해서 채점`;
+    $('grade-list').innerHTML=SC.recent.slice(0,7).map(t=>{const [p,a]=t.kospi,ok=Math.sign(p)===Math.sign(a);return`<div class="g-row"><span class="gd">${kdate(t.d)}</span><span class="num">예상 <span class="${cls(p)}">${sg(p,1)}</span> → 실제 <span class="${cls(a)}">${sg(a,1)}</span> <span class="${ok?'ok':'ng'}">${ok?'맞음':'틀림'}</span></span></div>`}).join('')+`<div class="gsub" style="margin-top:8px">코스피 시가 기준. 평균 오차 ${g.kospi.mae.toFixed(1)}%p.</div>`;
+  }
+
   // 2주 흐름
   const hist=(DATA.history||[]).slice(-14);
   const sc=hist.map(h=>({d:h.date,...score(h)}));
@@ -298,10 +348,34 @@ function render(){
     +`<div class="foot">VIX 하루 변화(${sg(today.vixChg,1)})도 점수에 들어간다(${S.sc[1]>0?'+':''}${S.sc[1]}). 7개 중 6개를 -2~+2로 매겨 더한 게 오늘 점수 <b class="num">${S.total>0?'+':''}${S.total}</b>점이다.</div>`;
 }
 
+function pathSVG(a,b,tone){
+  const W=340,H=170,L=34,R=8,T=12,Bm=24;
+  const all=[...a,...b,0];let lo=Math.min(...all),hi=Math.max(...all);
+  const pad=Math.max(.3,(hi-lo)*.15);lo-=pad;hi+=pad;
+  const X=i=>L+(W-L-R)*i/(a.length-1), Y=v=>T+(H-T-Bm)*(hi-v)/(hi-lo);
+  const line=arr=>arr.map((v,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('');
+  const col=tone==='fear'?'var(--fear)':tone==='calm'?'var(--calm)':'var(--text)';
+  const step=(hi-lo)>4?2:(hi-lo)>2?1:.5;
+  let grid='';for(let v=Math.ceil(lo/step)*step;v<=hi;v+=step){grid+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${Math.abs(v)<1e-9?'#d1d6db':'#f2f4f6'}" stroke-width="${Math.abs(v)<1e-9?1.2:1}"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="10.5" fill="#8b95a1">${v>0?'+':''}${+v.toFixed(1)}%</text>`}
+  const xt=[0,5,10,15,20].map(i=>`<text x="${X(i)}" y="${H-6}" text-anchor="middle" font-size="10.5" fill="#8b95a1">${i===0?'시작':i+'일'}</text>`).join('');
+  const li=a.indexOf(Math.min(...a)), lv=a[li];
+  const end=a[a.length-1];
+  return`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="평균 경로">${grid}${xt}
+  <path d="${line(b)}" fill="none" stroke="#b0b8c1" stroke-width="2" stroke-dasharray="4 4"/>
+  <path d="${line(a)}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="${X(li)}" cy="${Y(lv)}" r="4.5" fill="#fff" stroke="${col}" stroke-width="2.5"/>
+  <text x="${X(li)}" y="${Y(lv)+18}" text-anchor="middle" font-size="11" font-weight="700" fill="#191f28">평균 최저 ${lv.toFixed(1)}%</text>
+  <text x="${X(a.length-1)}" y="${Y(end)-9}" text-anchor="end" font-size="11" font-weight="700" fill="${col}">${end>0?'+':''}${end.toFixed(1)}%</text>
+  <text x="${X(b.length-1)}" y="${Y(b[b.length-1])+(b[b.length-1]>end?-8:16)}" text-anchor="end" font-size="10.5" fill="#8b95a1">평소 ${b[b.length-1]>0?'+':''}${b[b.length-1].toFixed(1)}%</text>
+  </svg>`;
+}
+
 function sayLine(key,x,A){
   const kn=x.kospi.next, s10=x.spx.d10, k20=x.kospi.d20;
   if(key==='strong_bull'||key==='bull'){
-    return `이런 날 다음엔 <b>한국이 아침에 먼저 맞는 일이 많았다</b>. 대신 2~4주 뒤엔 평소보다 잘 올라 있었다(코스피 4주 뒤 ${k20.up}%, 평소 ${A.kospi.d20.up}%). <b>내일 아침은 조심, 길게 보면 줍는 자리</b>였다.`;
+    const P=STATS.paths&&STATS.paths[key];
+    const low=P?Math.round(P.low_day_med):null;
+    return `이런 날 다음엔 <b>한국이 아침에 먼저 맞는 일이 많았다</b>. `+(low!=null?`공포가 시작된 뒤 바닥은 보통 <b>${low}거래일째</b>에 왔다. 첫날 바로 줍기보다는 <b>며칠 지켜볼 자리</b>였다.`:`길게 보면 평소보다 잘 올라 있었다(코스피 4주 뒤 ${k20.up}%).`);
   }
   if(key==='strong_bear'){
     return `단기엔 별일 없었다(코스피 다음 날 ${kn.up}%). 근데 <b>4주 뒤 성적이 제일 약했다</b>(${k20.up}%, 평균 ${sg(k20.avg)}). 다들 안심할 때가 오히려 조심할 때였다.`;

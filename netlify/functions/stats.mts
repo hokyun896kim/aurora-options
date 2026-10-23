@@ -221,12 +221,90 @@ export async function buildStats() {
     range_all: r2(mean(recent.map((r) => r.kr!.rng))),
   }
 
+  // ── 공포/안심 뒤 코스피 평균 경로 (사건 시작일만, 겹침 없이) ──
+  // 0 = 미국 시그널 뜬 날 직전 한국 종가, 1~20 = 그 뒤 한국 세션 종가 누적 수익률(%)
+  const H = 20
+  const pathFrom = (d: string) => {
+    const k = nextIdx(krD, d)
+    if (k < 1 || k + H - 1 >= krD.length) return null
+    const p = KS[krD[k - 1]].c
+    const out = [0]
+    for (let t = 0; t < H; t++) out.push((KS[krD[k + t]].c / p - 1) * 100)
+    return out
+  }
+  const avgPath = (ps: number[][]) => ps[0].map((_, t) => r2(mean(ps.map((x) => x[t]))))
+  const medPath = (ps: number[][]) => ps[0].map((_, t) => r2(median(ps.map((x) => x[t]))))
+  const paths: Record<string, unknown> = {}
+  const allP = rows.map((r) => pathFrom(r.d)).filter((x): x is number[] => !!x)
+  paths.all = { n: allP.length, avg: avgPath(allP) }
+  for (const s of Object.keys(LABEL)) {
+    let lastI = -99
+    const starts: string[] = []
+    for (const r of rows) {
+      if (r.sig !== s) continue
+      const i = spxI.get(r.d)!
+      if (i - lastI > 15) starts.push(r.d)
+      lastI = i
+    }
+    const ps = starts.map(pathFrom).filter((x): x is number[] => !!x)
+    if (ps.length >= 5) {
+      const lowDay = (p: number[]) => p.indexOf(Math.min(...p))
+      paths[s] = {
+        n: ps.length,
+        avg: avgPath(ps),
+        med: medPath(ps),
+        // 사건마다 바닥 찍은 날 중간값, 20세션 뒤 플러스로 끝난 비율
+        low_day_med: median(ps.map(lowDay)),
+        end_up: Math.round((ps.filter((p) => p[H] > 0).length / ps.length) * 100),
+      }
+    }
+  }
+
+  // ── 자가채점: 최근 60 한국 세션, 그날 이전 250세션으로만 맞춘 모델로 예상 → 실제 시가와 비교 ──
+  const withKr = rows.filter((r) => r.kr)
+  const TRACK = 60, WIN = 250
+  const track: { d: string; us: string; kospi: number[]; ss?: number[]; hy?: number[] }[] = []
+  const fit = (sub: Row[], f: (r: Row) => [number | undefined, number | undefined]) => {
+    const ps = sub.map(f).filter((p): p is [number, number] => p[0] != null && p[1] != null && isFinite(p[0]) && isFinite(p[1]))
+    return ps.length > 50 ? regress(ps) : null
+  }
+  for (let i = Math.max(WIN, withKr.length - TRACK); i < withKr.length; i++) {
+    const r = withKr[i]
+    const past = withKr.slice(i - WIN, i)
+    const mk = fit(past, (x) => [x.spxChg, x.kr!.gap])
+    if (!mk) continue
+    const e: (typeof track)[number] = { d: r.kr!.d, us: r.d, kospi: [r2(mk.alpha + mk.beta * r.spxChg), r2(r.kr!.gap)] }
+    if (r.soxChg != null) {
+      const ms = fit(past, (x) => [x.soxChg, x.ss])
+      const mh = fit(past, (x) => [x.soxChg, x.hy])
+      if (ms && r.ss != null) e.ss = [r2(ms.alpha + ms.beta * r.soxChg), r2(r.ss)]
+      if (mh && r.hy != null) e.hy = [r2(mh.alpha + mh.beta * r.soxChg), r2(r.hy)]
+    }
+    // 한국 연휴로 미국 여러 날이 같은 한국 세션에 몰리면 마지막 미국 날만 쓴다
+    if (track.length && track[track.length - 1].d === e.d) track[track.length - 1] = e
+    else track.push(e)
+  }
+  const grade = (key: "kospi" | "ss" | "hy", n: number) => {
+    const xs = track.slice(-n).map((t) => t[key]).filter((x): x is number[] => !!x)
+    if (!xs.length) return null
+    const dir = xs.filter(([p, a]) => Math.sign(p) === Math.sign(a)).length
+    const err = mean(xs.map(([p, a]) => Math.abs(p - a)))
+    return { n: xs.length, dir_hit: Math.round((dir / xs.length) * 100), mae: r2(err) }
+  }
+  const self_check = {
+    recent: track.slice(-10).reverse(),
+    d20: { kospi: grade("kospi", 20), ss: grade("ss", 20), hy: grade("hy", 20) },
+    d60: { kospi: grade("kospi", 60), ss: grade("ss", 60), hy: grade("hy", 60) },
+  }
+
   return {
     generated_at: new Date().toISOString(),
     period: { from: rows[0].d, to: rows[rows.length - 1].d, days: rows.length },
     signals,
     heatmap,
     kr_model,
+    paths,
+    self_check,
   }
 }
 
