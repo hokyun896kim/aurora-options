@@ -132,6 +132,16 @@ export default async () => {
   const series: Record<string, Series> = {}
   loaded.forEach((s) => s && (series[s.key] = s))
 
+  // VIX 계열은 미국 장 시작 전(새벽)에도 값이 찍힌다. 그 장전 값이 섞이면 날짜·점수가 어긋나므로
+  // 정규장만 있는 S&P500의 마지막 날짜보다 앞서간 값은 버린다. (장중엔 S&P도 오늘 날짜라 같이 실시간)
+  const cutoff = series.spx?.bars[series.spx.bars.length - 1]?.date
+  if (cutoff) {
+    for (const s of Object.values(series)) {
+      s.bars = s.bars.filter((b) => b.date <= cutoff)
+      if (s.bars.length < 2) delete series[s.key]
+    }
+  }
+
   const metrics: Record<string, unknown> = {}
   for (const [key, s] of Object.entries(series)) {
     const b = s.bars
