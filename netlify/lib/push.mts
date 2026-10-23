@@ -45,6 +45,21 @@ export async function allSubs() {
   return out
 }
 
+// 매일 아침 예상 기록 (log/YYYY-MM-DD = 한국 날짜). 같은 날 다시 돌면 덮어쓴다
+export async function saveLog(krDate: string, snap: unknown) {
+  await store().setJSON("log/" + krDate, { ...(snap as object), recorded_at: new Date().toISOString() })
+}
+export async function allLogs() {
+  const s = store()
+  const { blobs } = await s.list({ prefix: "log/" })
+  const out: any[] = []
+  for (const b of blobs) {
+    const v = await s.get(b.key, { type: "json" })
+    if (v) out.push(v)
+  }
+  return out
+}
+
 // 아침 알림 순번 (예약 함수 하나만 쓰므로 단순 저장으로 충분)
 export async function nextSeq() {
   const s = store()

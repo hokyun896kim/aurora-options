@@ -260,29 +260,65 @@ export async function buildStats() {
     }
   }
 
-  // ── 자가채점: 최근 60 한국 세션, 그날 이전 250세션으로만 맞춘 모델로 예상 → 실제 시가와 비교 ──
+  // ── 자가채점(재구성): 최근 250 한국 세션 ──
+  // 각 날짜마다 '그날 이전' 데이터만으로 예상을 다시 만들고 실제와 비교한다 (미래 데이터 안 씀)
+  //  · 시가 갭 모델: 직전 250세션 회귀  · 고저폭: 직전 250세션 같은 VIX 구간 평균
+  //  · 코스피 오를 확률: 2011년부터 그 전날까지 같은 시그널의 기록
   const withKr = rows.filter((r) => r.kr)
-  const TRACK = 60, WIN = 250
-  const track: { d: string; us: string; kospi: number[]; ss?: number[]; hy?: number[] }[] = []
+  const TRACK = 250, WIN = 250
+  type T = {
+    d: string; us: string; key: string; total?: number
+    p_up: number | null; base_up: number | null
+    kospi: number[]; sigma: number; close: number; rng?: number[]; ss?: number[]; hy?: number[]
+  }
+  const track: T[] = []
   const fit = (sub: Row[], f: (r: Row) => [number | undefined, number | undefined]) => {
     const ps = sub.map(f).filter((p): p is [number, number] => p[0] != null && p[1] != null && isFinite(p[0]) && isFinite(p[1]))
     return ps.length > 50 ? regress(ps) : null
   }
-  for (let i = Math.max(WIN, withKr.length - TRACK); i < withKr.length; i++) {
+  const BUCKETS = [[0, 15], [15, 20], [20, 25], [25, 35], [35, 999]]
+  const cnt: Record<string, { n: number; up: number }> = {}
+  const tot = { n: 0, up: 0 }
+  const pending: Row[] = [] // 결과가 아직 '그날 이전'이 아닌 행 (같은 한국 세션으로 몰린 경우)
+  for (let i = 0; i < withKr.length; i++) {
     const r = withKr[i]
-    const past = withKr.slice(i - WIN, i)
-    const mk = fit(past, (x) => [x.spxChg, x.kr!.gap])
-    if (!mk) continue
-    const e: (typeof track)[number] = { d: r.kr!.d, us: r.d, kospi: [r2(mk.alpha + mk.beta * r.spxChg), r2(r.kr!.gap)] }
-    if (r.soxChg != null) {
-      const ms = fit(past, (x) => [x.soxChg, x.ss])
-      const mh = fit(past, (x) => [x.soxChg, x.hy])
-      if (ms && r.ss != null) e.ss = [r2(ms.alpha + ms.beta * r.soxChg), r2(r.ss)]
-      if (mh && r.hy != null) e.hy = [r2(mh.alpha + mh.beta * r.soxChg), r2(r.hy)]
+    // r의 한국 세션보다 먼저 끝난 결과만 확률 집계에 넣는다
+    while (pending.length && pending[0].kr!.d < r.kr!.d) {
+      const x = pending.shift()!
+      ;(cnt[x.sig] ||= { n: 0, up: 0 }).n++
+      if (x.kr!.ret > 0) cnt[x.sig].up++
+      tot.n++
+      if (x.kr!.ret > 0) tot.up++
     }
-    // 한국 연휴로 미국 여러 날이 같은 한국 세션에 몰리면 마지막 미국 날만 쓴다
-    if (track.length && track[track.length - 1].d === e.d) track[track.length - 1] = e
-    else track.push(e)
+    if (i >= Math.max(WIN, withKr.length - TRACK)) {
+      const past = withKr.slice(i - WIN, i)
+      const mk = fit(past, (x) => [x.spxChg, x.kr!.gap])
+      if (mk) {
+        const c = cnt[r.sig]
+        const e: T = {
+          d: r.kr!.d, us: r.d, key: r.sig,
+          p_up: c && c.n >= 20 ? Math.round((c.up / c.n) * 100) : null,
+          base_up: tot.n ? Math.round((tot.up / tot.n) * 100) : null,
+          kospi: [r2(mk.alpha + mk.beta * r.spxChg), r2(r.kr!.gap)],
+          sigma: mk.sigma,
+          close: r2(r.kr!.ret),
+        }
+        const b = BUCKETS.find(([lo, hi]) => r.vix >= lo && r.vix < hi)!
+        const same = past.filter((x) => x.vix >= b[0] && x.vix < b[1])
+        const pool = same.length >= 10 ? same : past
+        e.rng = [r2(mean(pool.map((x) => x.kr!.rng))), r2(r.kr!.rng)]
+        if (r.soxChg != null) {
+          const ms = fit(past, (x) => [x.soxChg, x.ss])
+          const mh = fit(past, (x) => [x.soxChg, x.hy])
+          if (ms && r.ss != null) e.ss = [r2(ms.alpha + ms.beta * r.soxChg), r2(r.ss)]
+          if (mh && r.hy != null) e.hy = [r2(mh.alpha + mh.beta * r.soxChg), r2(r.hy)]
+        }
+        // 한국 연휴로 미국 여러 날이 같은 한국 세션에 몰리면 마지막 미국 날만 쓴다
+        if (track.length && track[track.length - 1].d === e.d) track[track.length - 1] = e
+        else track.push(e)
+      }
+    }
+    pending.push(r)
   }
   const grade = (key: "kospi" | "ss" | "hy", n: number) => {
     const xs = track.slice(-n).map((t) => t[key]).filter((x): x is number[] => !!x)
@@ -305,6 +341,7 @@ export async function buildStats() {
     kr_model,
     paths,
     self_check,
+    track,
   }
 }
 

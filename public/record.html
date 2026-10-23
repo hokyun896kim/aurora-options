@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f4f6">
+<title>오로라 · 기록</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#f2f4f6; --card:#fff; --text:#191f28; --sub:#4e5968; --dim:#8b95a1; --faint:#b0b8c1;
+  --line:#f2f4f6; --chip:#f2f4f6; --blue:#3182f6; --blue-bg:#e8f3ff;
+  --up:#f04452; --up-bg:#fff0f1; --down:#3182f6; --down-bg:#e8f3ff;
+  --fear:#ff8a00; --fear-bg:#fff4e6; --calm:#00a979; --calm-bg:#e6f8f2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+body{padding:0 16px 40px;padding-top:env(safe-area-inset-top)}
+.wrap{max-width:480px;margin:0 auto}
+.num{font-variant-numeric:tabular-nums}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 4px 14px}
+.brand{font-size:20px;font-weight:800}
+.brand small{display:block;font-size:12.5px;font-weight:500;color:var(--dim);margin-top:2px}
+.refresh{border:0;background:var(--card);width:40px;height:40px;border-radius:12px;font-size:18px;color:var(--sub);cursor:pointer}
+.refresh:active{transform:scale(.95)}
+.refresh.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.card{background:var(--card);border-radius:24px;padding:24px 20px;margin-bottom:12px}
+.card h2{font-size:17px;font-weight:700;margin-bottom:4px}
+.card .cap{font-size:13px;color:var(--dim);margin-bottom:18px;line-height:1.5}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:999px;background:var(--chip);color:var(--sub);font-size:12.5px;font-weight:600;white-space:nowrap}
+.chip.fear{background:var(--fear-bg);color:var(--fear)}
+.chip.calm{background:var(--calm-bg);color:var(--calm)}
+.chip.up{background:var(--up-bg);color:var(--up)}
+.chip.down{background:var(--down-bg);color:var(--down)}
+.up{color:var(--up)} .down{color:var(--down)}
+
+/* 오늘 한 줄 */
+.hero .when{margin-bottom:14px}
+.hero .head{font-size:26px;font-weight:800;line-height:1.3;letter-spacing:-.02em}
+.hero .why{font-size:14px;color:var(--dim);margin-top:6px}
+.hero .big{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.hero .big-label{font-size:14px;color:var(--sub);font-weight:600}
+.hero .big-row{display:flex;align-items:baseline;gap:10px;margin-top:4px;flex-wrap:wrap}
+.hero .big-num{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.hero .big-vs{font-size:15px;color:var(--dim);font-weight:600}
+.hero .say{margin-top:16px;font-size:15px;line-height:1.65;color:var(--sub);background:var(--bg);border-radius:16px;padding:14px 16px}
+.hero .say b{color:var(--text)}
+
+/* 행 목록 */
+.row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;gap:12px}
+.row+.row{border-top:1px solid var(--line)}
+.row .l{min-width:0}
+.row .name{font-size:16px;font-weight:600}
+.row .desc{font-size:12.5px;color:var(--dim);margin-top:2px}
+.row .r{text-align:right;flex-shrink:0}
+.row .val{font-size:20px;font-weight:700}
+.row .val.small{font-size:17px}
+.row .note{font-size:12.5px;color:var(--dim);margin-top:2px}
+.row .note.up{color:var(--up)} .row .note.down{color:var(--down)}
+.foot{font-size:12.5px;color:var(--dim);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+
+/* 확률 비교 막대 */
+.odds{padding:12px 0}
+.odds+.odds{border-top:1px solid var(--line)}
+.odds .top{display:flex;justify-content:space-between;align-items:baseline}
+.odds .name{font-size:15px;font-weight:600}
+.odds .pct{font-size:22px;font-weight:800}
+.odds .track{position:relative;height:10px;background:var(--bg);border-radius:999px;margin:10px 0 6px;overflow:visible}
+.odds .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--blue);transition:width .6s}
+.odds .base{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--text);border-radius:2px}
+.odds .meta{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim)}
+
+/* 경로 그래프 */
+.path svg{width:100%;height:auto;display:block;overflow:visible}
+.path .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.path-cap{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.55}
+.sub-h{font-size:14px;font-weight:700;color:var(--sub);margin:22px 0 2px;padding-top:18px;border-top:1px solid var(--line)}
+/* 자가채점 */
+.grade{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.grade summary .gl{font-size:14px;font-weight:600}
+.grade summary .gl b{font-size:17px}
+.grade .gsub{font-size:12.5px;color:var(--dim);margin-top:2px}
+.grade .g-row{display:flex;justify-content:space-between;font-size:13.5px;padding:9px 0}
+.grade .g-row+.g-row{border-top:1px solid var(--line)}
+.grade .g-row .gd{color:var(--sub)}
+.grade .ok{color:var(--calm);font-weight:700} .grade .ng{color:var(--faint);font-weight:700}
+
+/* 아침 알림 */
+.bell{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:20px;padding:14px 16px;margin-bottom:12px}
+.bell .ic{width:38px;height:38px;border-radius:12px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.bell .tx{flex:1;min-width:0}
+.bell .t1{font-size:15px;font-weight:700}
+.bell .t2{font-size:12.5px;color:var(--dim);margin-top:1px;line-height:1.45}
+.bell .btn{border:0;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0}
+.bell .btn.pri{background:var(--blue);color:#fff}
+.bell .btn.sec{background:var(--chip);color:var(--sub);padding:8px 11px;font-size:13px}
+.bell .btns{display:flex;gap:6px;flex-shrink:0}
+.bell .btn:disabled{opacity:.5}
+
+/* 2주 흐름 */
+.bars{display:flex;align-items:flex-end;gap:5px;height:110px;padding-top:6px}
+.bars .b{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.bars .stick{width:100%;border-radius:6px 6px 3px 3px;background:var(--faint);min-height:6px}
+.bars .stick.fear{background:var(--fear)} .bars .stick.fear2{background:#ffc078}
+.bars .stick.calm{background:var(--calm)} .bars .stick.calm2{background:#8fd9c0}
+.bars .b.today .stick{outline:2px solid var(--text);outline-offset:2px}
+.bars-axis{display:flex;gap:5px;margin-top:8px}
+.bars-axis span{flex:1;text-align:center;font-size:10.5px;color:var(--dim)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--dim)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
+/* 접기 */
+details summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+details summary::-webkit-details-marker{display:none}
+details summary .arrow{color:var(--dim);transition:transform .2s;font-size:14px}
+details[open] summary .arrow{transform:rotate(180deg)}
+details .inner{margin-top:14px}
+
+.skel{color:transparent!important;background:linear-gradient(90deg,#eef0f3 25%,#f6f7f9 50%,#eef0f3 75%);background-size:200% 100%;animation:sk 1.2s infinite;border-radius:8px}
+@keyframes sk{to{background-position:-200% 0}}
+.err{background:var(--up-bg);color:var(--up);font-size:14px;font-weight:600;border-radius:16px;padding:14px 16px;margin-bottom:12px;display:none}
+.bottom{font-size:12px;color:var(--faint);text-align:center;line-height:1.7;margin-top:18px}
+.bottom a{color:var(--dim)}
+</style>
+<style>
+.back{border:0;background:var(--card);width:40px;height:40px;border-radius:12px;font-size:20px;color:var(--sub);cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
+header .ttl{flex:1;margin-left:12px}
+.seg{display:flex;background:var(--bg);border-radius:12px;padding:3px;margin-bottom:18px}
+.seg button{flex:1;border:0;background:transparent;border-radius:10px;padding:9px 0;font-size:14px;font-weight:600;color:var(--dim);font-family:inherit;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.headline{font-size:15px;color:var(--sub);font-weight:600}
+.headline .big-num{font-size:44px;font-weight:800;letter-spacing:-.03em;color:var(--text);display:block;line-height:1.15;margin-top:2px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+.tile{background:var(--bg);border-radius:16px;padding:12px 10px}
+.tile .k{font-size:12px;color:var(--dim);font-weight:600}
+.tile .v{font-size:21px;font-weight:800;margin-top:2px}
+.tile .s{font-size:11px;color:var(--dim);margin-top:1px}
+.live-note{margin-top:14px;font-size:13px;color:var(--sub);background:var(--blue-bg);border-radius:14px;padding:11px 13px;line-height:1.55}
+.dots{display:grid;grid-template-columns:repeat(15,1fr);gap:5px}
+.dots i{aspect-ratio:1;border-radius:5px;background:#e5e8eb;display:block}
+.dots i.ok{background:var(--calm)} .dots i.ng{background:#d1d6db} .dots i.live{outline:2px solid var(--blue);outline-offset:1px}
+.day{padding:14px 0}
+.day+.day{border-top:1px solid var(--line)}
+.day .l1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.day .dt{font-size:15px;font-weight:700}
+.day .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.day .tags .chip{padding:3px 8px;font-size:11.5px}
+.day .res{text-align:right;font-size:14px}
+.day .l2{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.55}
+.mark{font-weight:700;margin-left:4px}
+.mark.ok{color:var(--calm)} .mark.ng{color:var(--faint)} .mark.wait{color:var(--blue)}
+.more{width:100%;border:0;background:var(--bg);border-radius:14px;padding:13px;font-size:14px;font-weight:600;color:var(--sub);margin-top:10px;cursor:pointer;font-family:inherit}
+.rule{font-size:13.5px;color:var(--sub);line-height:1.7}
+.rule b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="/" aria-label="오로라로">‹</a>
+    <div class="ttl brand">기록<small id="updated">불러오는 중</small></div>
+  </header>
+  <div class="err" id="err"></div>
+
+  <section class="card">
+    <div class="seg" id="seg">
+      <button data-k="d20">최근 20일</button><button data-k="all" class="on">1년</button><button data-k="live">실기록</button>
+    </div>
+    <div class="headline">코스피 시가 방향<span class="big-num num skel" id="s-dir">00%</span></div>
+    <div class="tiles">
+      <div class="tile"><div class="k">범위 안</div><div class="v num" id="s-band">--</div><div class="s">±범위 적중</div></div>
+      <div class="tile"><div class="k">판단 적중</div><div class="v num" id="s-call">--</div><div class="s" id="s-calln">&nbsp;</div></div>
+      <div class="tile"><div class="k">평균 오차</div><div class="v num" id="s-mae">--</div><div class="s">시가 기준</div></div>
+    </div>
+    <div class="foot" id="s-foot">&nbsp;</div>
+    <div class="live-note" id="live-note"></div>
+  </section>
+
+  <section class="card">
+    <h2>최근 60거래일</h2>
+    <div class="cap">초록 = 시가 방향 맞음 · 회색 = 틀림 · 파란 테두리 = 실기록 · 오른쪽 아래가 최근</div>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary><div><h2>채점 기준</h2><div class="cap" style="margin:0">뭘 맞았다고 치는지</div></div><span class="arrow">▼</span></summary>
+      <div class="inner rule">
+        <p><b>시가 방향</b> · 예상한 코스피 시가 등락의 방향(+/−)이 실제 시가와 같으면 맞음.</p><br>
+        <p><b>범위 안</b> · 실제 시가가 화면에 보여준 '열에 일곱은 이 안쪽' 범위 안에 들어오면 맞음. 정직하게 맞췄다면 70% 근처가 나와야 한다.</p><br>
+        <p><b>판단 적중</b> · '코스피 오를 확률'이 평소보다 4%p 이상 높거나 낮았던 날만 센다. 낮다고 한 날 종가가 내렸으면, 높다고 한 날 종가가 올랐으면 맞음. 평소랑 비슷하다고 한 날은 판단을 안 한 걸로 친다.</p><br>
+        <p><b>실기록</b> · 평일 아침 7:30에 그날 앱이 한 말을 그대로 저장한 것. 고칠 수 없다.</p>
+        <p><b>재구성</b> · 실기록이 쌓이기 전 1년은, 각 날짜마다 그날 이전 데이터만으로 예상을 다시 만들어 채점했다. 미래 데이터는 안 썼다.</p>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>하루씩 보기</h2>
+    <div class="cap">예상 → 실제 시가 · 아래 줄은 종가와 판단</div>
+    <div id="days"></div>
+    <button class="more" id="more" style="display:none">더 보기</button>
+  </section>
+
+  <div class="bottom"><a href="/">← 오로라로 돌아가기</a></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const DOW=['일','월','화','수','목','금','토'];
+function kdate(iso){const [y,m,d]=iso.split('-').map(Number);return `${m}월 ${d}일(${DOW[new Date(Date.UTC(y,m-1,d)).getUTCDay()]})`}
+const sg=(v,d=1)=>(v>=0?'+':'')+v.toFixed(d)+'%';
+const cls=v=>v>0.05?'up':v<-0.05?'down':'';
+const MOOD={strong_bull:['공포 크게','fear'],bull:['공포 커짐','fear'],neutral:['평범',''],bear:['안심','calm'],strong_bear:['너무 안심','calm']};
+let R=null, shown=0, segKey='all';
+
+function showSummary(){
+  const S=R.summary[segKey];
+  const empty=!S||!S.n;
+  $('s-dir').classList.remove('skel');
+  $('s-dir').textContent=empty?'--':S.gap_dir+'%';
+  $('s-band').textContent=empty||S.in_band==null?'--':S.in_band+'%';
+  $('s-call').textContent=empty||S.call_hit==null?'--':S.call_hit+'%';
+  $('s-calln').textContent=empty?'':`${S.calls}번 판단`;
+  $('s-mae').textContent=empty||S.mae==null?'--':S.mae.toFixed(1)+'%p';
+  const lab={d20:'최근 20거래일',all:'최근 1년',live:'실기록'}[segKey];
+  $('s-foot').innerHTML=empty?`${lab}: 아직 채점할 날이 없다.`:`${lab} ${S.n}일 채점 · 삼성 방향 ${S.ss_dir??'--'}% · 하이닉스 방향 ${S.hy_dir??'--'}%`+(S.pending?` · 결과 대기 ${S.pending}일`:'');
+}
+
+function render(){
+  const L=R.summary.live;
+  $('updated').textContent='그날 아침 한 말 vs 실제';
+  $('live-note').innerHTML=R.first_live
+    ? `📌 <b>실기록 ${L.n+L.pending}일</b> · ${kdate(R.first_live)}부터 매일 아침 7:30에 자동으로 쌓이는 중`
+    : `📌 <b>실기록은 다음 평일 아침 7:30부터</b> 자동으로 쌓인다. 그 전 1년은 재구성 기록이다.`;
+  showSummary();
+
+  const graded=R.rows.filter(r=>r.g).slice(0,60).reverse();
+  $('dots').innerHTML=graded.map(r=>`<i class="${r.g.gap_dir?'ok':'ng'} ${r.source==='live'?'live':''}" title="${r.d}"></i>`).join('');
+
+  $('days').innerHTML=''; shown=0; more();
+}
+
+function dayRow(r){
+  const [mn,mc]=MOOD[r.key]||['',''];
+  const p=r.pred, a=r.act, g=r.g;
+  let res='';
+  if(p.kospi!=null){
+    res=`예상 <span class="${cls(p.kospi)}">${sg(p.kospi)}</span> → `+(a?`실제 <span class="${cls(a.gap)}">${sg(a.gap)}</span><span class="mark ${g&&g.gap_dir?'ok':'ng'}">${g&&g.gap_dir?'맞음':'틀림'}</span>`:`<span class="mark wait">결과 대기</span>`);
+  }
+  let l2='';
+  if(a){
+    l2+=`종가 <span class="${cls(a.close)}">${sg(a.close)}</span>`;
+    if(g&&g.in_band!=null)l2+=` · 범위 ${g.in_band?'안':'밖'}`;
+    if(g&&g.call){l2+=` · 판단 '오를 확률 ${g.call==='down'?'낮음':'높음'}' <span class="mark ${g.call_hit?'ok':'ng'}">${g.call_hit?'맞음':'틀림'}</span>`}
+    if(a.ss!=null&&p.ss!=null)l2+=`<br>삼성 ${sg(p.ss)} → ${sg(a.ss)} · 하이닉스 ${p.hy!=null?sg(p.hy):'--'} → ${a.hy!=null?sg(a.hy):'--'}`;
+  }
+  if(r.sent)l2+=`<br>보낸 알림: ${r.sent}`;
+  return `<div class="day"><div class="l1"><div><div class="dt">${kdate(r.d)}</div><div class="tags">${r.source==='live'?'<span class="chip down">실기록</span>':'<span class="chip">재구성</span>'}${mn?`<span class="chip ${mc}">${mn}</span>`:''}</div></div><div class="res num">${res}</div></div>${l2?`<div class="l2 num">${l2}</div>`:''}</div>`;
+}
+function more(){
+  const next=R.rows.slice(shown,shown+20);
+  $('days').insertAdjacentHTML('beforeend',next.map(dayRow).join(''));
+  shown+=next.length;
+  $('more').style.display=shown<R.rows.length?'':'none';
+}
+$('more').onclick=more;
+$('seg').onclick=e=>{const b=e.target.closest('button');if(!b||!R)return;segKey=b.dataset.k;[...$('seg').children].forEach(x=>x.classList.toggle('on',x===b));showSummary()};
+
+(async()=>{
+  try{
+    const r=await fetch('/api/record?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    R=await r.json(); if(R.error)throw new Error(R.error);
+    render();
+  }catch(e){$('err').style.display='block';$('err').textContent='기록을 못 불러왔다: '+e.message}
+})();
+</script>
+</body>
+</html>

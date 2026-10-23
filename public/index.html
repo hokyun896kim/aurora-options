@@ -106,6 +106,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:18p
 .bell .btn.sec{background:var(--chip);color:var(--sub);padding:8px 11px;font-size:13px}
 .bell .btns{display:flex;gap:6px;flex-shrink:0}
 .bell .btn:disabled{opacity:.5}
+.more{width:100%;border:0;background:var(--bg);border-radius:14px;padding:13px;font-size:14px;font-weight:600;color:var(--sub);margin-top:10px;cursor:pointer;font-family:inherit}
 
 /* 2주 흐름 */
 .bars{display:flex;align-items:flex-end;gap:5px;height:110px;padding-top:6px}
@@ -137,7 +138,7 @@ details .inner{margin-top:14px}
 <div class="wrap">
   <header>
     <div class="brand">오로라<small id="updated">불러오는 중</small></div>
-    <button class="refresh" id="refresh" aria-label="새로고침" onclick="loadAll(true)">↻</button>
+    <div style="display:flex;gap:8px"><a class="refresh" href="/record.html" aria-label="기록" style="display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:15px;font-weight:700;width:auto;padding:0 14px">기록</a><button class="refresh" id="refresh" aria-label="새로고침" onclick="loadAll(true)">↻</button></div>
   </header>
 
   <div class="err" id="err"></div>
@@ -288,13 +289,13 @@ function render(){
   const M=STATS&&STATS.kr_model;
   if(krDate)$('kr-title').textContent=`${kdate(krDate)} 한국 시가 예상`;
   const est=(model,x)=>model.alpha+model.beta*x;
-  if(M&&m.spx){const v=est(M.kospi_gap_spx,m.spx.change_pct);$('kr-gap').textContent=sg(v,1);$('kr-gap').className='val num '+cls(v);$('kr-gap-d').textContent=`보통 ±${M.kospi_gap_spx.sigma.toFixed(1)}% 안쪽에서 열림`}
+  if(M&&m.spx){const v=est(M.kospi_gap_spx,m.spx.change_pct);$('kr-gap').textContent=sg(v,1);$('kr-gap').className='val num '+cls(v);$('kr-gap-d').textContent=`열에 일곱은 ±${(M.kospi_gap_spx.sigma*1.5).toFixed(1)}% 안쪽에서 열림`}
   const semi=(id,mSox,mSpx)=>{
     if(!M)return;
     let model,x,lab;
     if(m.sox){model=M[mSox];x=m.sox.change_pct;lab='반도체지수'}else if(m.spx){model=M[mSpx];x=m.spx.change_pct;lab='S&P500'}else return;
     const v=est(model,x);$(id).textContent=sg(v,1);$(id).className='val num '+cls(v);
-    $(id+'-d').textContent=`보통 ±${model.sigma.toFixed(1)}% 안쪽 · ${lab} 기준`;
+    $(id+'-d').textContent=`열에 일곱은 ±${(model.sigma*1.5).toFixed(1)}% 안쪽 · ${lab} 기준`;
   };
   semi('kr-ss','samsung_gap_sox','samsung_gap_spx');
   semi('kr-hy','hynix_gap_sox','hynix_gap_spx');
@@ -340,7 +341,7 @@ function render(){
     const g=SC.d20, g6=SC.d60;
     $('grade-line').innerHTML=`최근 20일 코스피 방향 <b class="num">${g.kospi.dir_hit}%</b> 맞춤`;
     $('grade-sub').textContent=`삼성 ${g.ss?g.ss.dir_hit+'%':'--'} · 하이닉스 ${g.hy?g.hy.dir_hit+'%':'--'} · 60일로 보면 코스피 ${g6.kospi.dir_hit}% · 그날 이전 데이터로만 예상해서 채점`;
-    $('grade-list').innerHTML=SC.recent.slice(0,7).map(t=>{const [p,a]=t.kospi,ok=Math.sign(p)===Math.sign(a);return`<div class="g-row"><span class="gd">${kdate(t.d)}</span><span class="num">예상 <span class="${cls(p)}">${sg(p,1)}</span> → 실제 <span class="${cls(a)}">${sg(a,1)}</span> <span class="${ok?'ok':'ng'}">${ok?'맞음':'틀림'}</span></span></div>`}).join('')+`<div class="gsub" style="margin-top:8px">코스피 시가 기준. 평균 오차 ${g.kospi.mae.toFixed(1)}%p.</div>`;
+    $('grade-list').innerHTML=SC.recent.slice(0,7).map(t=>{const [p,a]=t.kospi,ok=Math.sign(p)===Math.sign(a);return`<div class="g-row"><span class="gd">${kdate(t.d)}</span><span class="num">예상 <span class="${cls(p)}">${sg(p,1)}</span> → 실제 <span class="${cls(a)}">${sg(a,1)}</span> <span class="${ok?'ok':'ng'}">${ok?'맞음':'틀림'}</span></span></div>`}).join('')+`<div class="gsub" style="margin-top:8px">코스피 시가 기준. 평균 오차 ${g.kospi.mae.toFixed(1)}%p.</div><a class="more" href="/record.html" style="display:block;text-align:center;text-decoration:none">1년 기록 전체 보기 →</a>`;
   }
 
   // 2주 흐름

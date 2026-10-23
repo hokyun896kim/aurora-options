@@ -59,13 +59,21 @@ export function buildBrief(data: any, stats: any) {
   lines.push(`${HEAD[key]} · VIX ${vix.toFixed(1)}(${sg(vixChg, 0)})`)
 
   const M = stats?.kr_model
+  const r2 = (v: number) => Math.round(v * 100) / 100
+  const pred: Record<string, number> = {}
   if (M && m.spx) {
     const g = M.kospi_gap_spx
-    let t = `코스피 시가 ${sg(g.alpha + g.beta * m.spx.change_pct)} 예상`
+    pred.kospi = r2(g.alpha + g.beta * m.spx.change_pct)
+    pred.sigma = g.sigma
+    let t = `코스피 시가 ${sg(pred.kospi)} 예상`
     if (m.sox) {
       const ss = M.samsung_gap_sox, hy = M.hynix_gap_sox
-      t += ` · 삼성 ${sg(ss.alpha + ss.beta * m.sox.change_pct)} · 하닉 ${sg(hy.alpha + hy.beta * m.sox.change_pct)}`
+      pred.ss = r2(ss.alpha + ss.beta * m.sox.change_pct)
+      pred.hy = r2(hy.alpha + hy.beta * m.sox.change_pct)
+      t += ` · 삼성 ${sg(pred.ss)} · 하닉 ${sg(pred.hy)}`
     }
+    const b = (M.range_by_vix || []).find((x: any) => vix >= x.lo && vix < x.hi && x.n >= 10)
+    pred.rng = b ? b.avg : M.range_all
     lines.push(t)
   }
 
@@ -82,5 +90,14 @@ export function buildBrief(data: any, stats: any) {
       lines.push(`→ 쏠림 없음. 옵션 신호 약하니 다른 근거로`)
     }
   }
-  return { key, usDate, krDate, topic: `${kdate(krDate)} 한국 아침`, body: lines.join("\n") }
+  const topic = `${kdate(krDate)} 한국 아침`
+  // 그날 아침 앱이 한 말 그대로 남기는 기록 한 장
+  const snap = {
+    kr_date: krDate, us_date: usDate, key, total,
+    p_up: S?.kospi?.next?.up ?? null, base_up: A?.kospi?.next?.up ?? null,
+    pred,
+    metrics: { vix, vix_chg: vixChg, vvix: m.vvix?.price, skew: m.skew?.price, spx_chg: m.spx?.change_pct, sox_chg: m.sox?.change_pct },
+    message: lines.join("\n"),
+  }
+  return { key, usDate, krDate, topic, body: lines.join("\n"), snap }
 }
