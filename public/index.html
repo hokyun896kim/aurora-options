@@ -7,7 +7,7 @@
      Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e27">
-<title>Aurora · US Options Signal v4.3</title>
+<title>Aurora · US Options Signal v5.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Pretendard:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -1037,6 +1037,29 @@ body::after{
 .pattern-card{animation-delay:.3s}
 .narrative{animation-delay:.35s}
 .kr-impact{animation-delay:.4s}
+.hero-basis{margin-top:12px;font-size:11px;color:var(--text-dim);line-height:1.55}
+.score-card{
+  background:var(--glass);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--glass-border);border-radius:18px;padding:18px 20px;margin-bottom:20px;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+}
+.score-take{font-size:13.5px;line-height:1.7;color:var(--text);background:rgba(0,0,0,.22);border:1px solid var(--glass-border);border-radius:12px;padding:12px 14px;margin:12px 0}
+.score-take b{color:var(--cyan)}
+.score-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.score-table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+.score-table col.c0{width:31%}
+.score-table th{color:var(--text-dim);font-weight:600;font-size:10.5px;line-height:1.35;text-align:right;padding:6px 3px;border-bottom:1px solid var(--glass-border)}
+.score-table th:first-child,.score-table td:first-child{text-align:left}
+.score-table td{text-align:right;padding:8px 3px;border-bottom:1px solid rgba(255,255,255,.05);font-variant-numeric:tabular-nums;font-weight:700}
+.score-table td small{display:block;font-size:10px;white-space:nowrap;font-weight:500;color:var(--text-dim)}
+.score-table tr.now td{background:rgba(255,255,255,.07)}
+.score-table tr.now td:first-child{box-shadow:inset 3px 0 0 var(--cyan)}
+.score-table tr.base td{color:var(--text-dim);font-weight:600}
+.score-table .up{color:var(--bull)}
+.score-table .dn{color:var(--bear)}
+.score-note{font-size:10.5px;color:var(--text-faint);margin-top:10px;line-height:1.6}
+.tail-cell-measured{font-size:10.5px;color:var(--text-mid);margin-top:6px;line-height:1.5;opacity:.9}
+.kr-range-note{display:block;font-size:10.5px;color:var(--text-dim);font-weight:500}
 
 /* === Toast === */
 .toast{
@@ -1448,21 +1471,22 @@ body::after{
     </div>
     <div class="hero-bottom">
       <div>
-        <div class="hero-conf-label">초단기 1~2일</div>
+        <div class="hero-conf-label">코스피 다음날 오른 확률</div>
         <div class="hero-conf-bar"><div class="hero-conf-fill" id="conf-1" style="width:0%"></div></div>
         <div class="hero-conf-pct" id="conf-1-pct">--</div>
       </div>
       <div>
-        <div class="hero-conf-label">단기 3~10일</div>
+        <div class="hero-conf-label">S&amp;P500 1주 뒤 오른 확률</div>
         <div class="hero-conf-bar"><div class="hero-conf-fill" id="conf-2" style="width:0%"></div></div>
         <div class="hero-conf-pct" id="conf-2-pct">--</div>
       </div>
       <div>
-        <div class="hero-conf-label">중기 2주</div>
+        <div class="hero-conf-label">S&amp;P500 2주 뒤 오른 확률</div>
         <div class="hero-conf-bar"><div class="hero-conf-fill" id="conf-3" style="width:0%"></div></div>
         <div class="hero-conf-pct" id="conf-3-pct">--</div>
       </div>
     </div>
+    <div class="hero-basis" id="hero-basis">2011년 이후 같은 시그널이 뜬 날들의 실제 결과 · 불러오는 중</div>
   </div>
 
   <div class="gauge-section" id="gauge-section">
@@ -1541,22 +1565,26 @@ body::after{
         <div class="tail-cell-now">◉ 현재</div>
         <div class="tail-cell-title">안전 구간</div>
         <div class="tail-cell-desc">꼬리 리스크 낮음. 큰손도 평온, 추세 추종 우호.</div>
+        <div class="tail-cell-measured" id="tail-m-LL"></div>
       </div>
       <div class="tail-cell caution" id="tail-cell-LH">
         <div class="tail-cell-now">◉ 현재</div>
         <div class="tail-cell-title">잠재 경계</div>
         <div class="tail-cell-desc">큰손이 표면 평온에도 꼬리 헷지 시작.</div>
+        <div class="tail-cell-measured" id="tail-m-LH"></div>
       </div>
       <div class="tail-axis-y">VVIX 높음<br>(&gt; 95)</div>
       <div class="tail-cell caution" id="tail-cell-HL">
         <div class="tail-cell-now">◉ 현재</div>
         <div class="tail-cell-title">변동성 확대</div>
         <div class="tail-cell-desc">큰 변동 임박. 외인 매도 가능, 단기 정리 검토.</div>
+        <div class="tail-cell-measured" id="tail-m-HL"></div>
       </div>
       <div class="tail-cell danger" id="tail-cell-HH">
         <div class="tail-cell-now">◉ 현재</div>
         <div class="tail-cell-title">위험 구간</div>
-        <div class="tail-cell-desc">변동성 폭발 + 꼬리 헷지 집중. 헷지·축소 시급.</div>
+        <div class="tail-cell-desc">변동성 폭발 + 꼬리 헷지 집중. 흔들림이 제일 큰 구간.</div>
+        <div class="tail-cell-measured" id="tail-m-HH"></div>
       </div>
     </div>
     <div class="tail-risk-current" id="tail-risk-current">
@@ -1566,12 +1594,25 @@ body::after{
   </div>
   <!-- ========== v4.3: 꼬리 리스크 히트맵 끝 ========== -->
 
+  <div class="score-card" id="score-card">
+    <div class="kr-impact-head">
+      <span style="font-size:18px">📏</span>
+      <div>
+        <div class="kr-title">이 시그널, 진짜 맞았나?</div>
+        <div class="kr-sub" id="score-sub">2011년부터 매일 똑같은 채점으로 매기고, 그 뒤 실제로 어떻게 됐는지 셌다</div>
+      </div>
+    </div>
+    <div class="score-take" id="score-take">불러오는 중...</div>
+    <div class="score-table-wrap"><table class="score-table" id="score-table"></table></div>
+    <div class="score-note">큰 숫자 = 오른 확률 · 작은 글씨 = 일수 / 평균 수익률. "번"은 사건 수다. 연달아 뜬 날은 한 번으로 묶고, 15거래일 넘게 쉬었다 다시 뜨면 새 사건으로 셌다. 초록·빨강은 평소보다 5%p 이상 높거나 낮은 칸이다.</div>
+  </div>
+
   <div class="kr-impact">
     <div class="kr-impact-head">
       <span style="font-size:18px">🇰🇷</span>
       <div>
         <div class="kr-title">한국 시가 영향 추론</div>
-        <div class="kr-sub">미국 시그널 → 다음 영업일 한국 시장 영향</div>
+        <div class="kr-sub" id="kr-sub">미국 마감 → 다음 날 한국 시가 · 최근 1년 실측으로 매일 다시 맞춤</div>
       </div>
     </div>
     <div class="kr-row">
@@ -1651,7 +1692,7 @@ body::after{
     </div>
   </div>
 
-  <div class="footer">Aurora · US Options · v4.4 · 자동 수집</div>
+  <div class="footer">Aurora · US Options · v5.0 · 15년 실측 성적표</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1727,6 +1768,7 @@ async function fetchData(){
     if(m.vvix){r.vvix=m.vvix.price;r.vvixChg=m.vvix.change_pct}
     if(m.skew){r.skew=m.skew.price;r.skewChg=m.skew.change_pct}
     if(m.spx){r.spx=m.spx.price;r.spxChg=m.spx.change_pct}
+    if(m.sox){r.sox=m.sox.price;r.soxChg=m.sox.change_pct}
     
     if(m.vix&&m.vix.date){window.__mktDate=m.vix.date;r.date=m.vix.date}
     if(Array.isArray(data.history)) backfillHistory(data.history);
@@ -1839,10 +1881,9 @@ function computeSignal(r){
   signal.classList.add(signalClass);
   if(cls)hero.classList.add(cls);
   
-  const baseConf=Math.min(78,50+Math.abs(total)*2.5+align*2);
-  setConf('conf-1',Math.max(50,baseConf-12));
-  setConf('conf-2',baseConf);
-  setConf('conf-3',Math.max(50,baseConf-3));
+  window.__lastR=r;
+  window.__sigKey=sigKeyOf(total,align,valid.length);
+  renderMeasured();
   
   document.getElementById('action-body').innerHTML=genAction(total,align,r,signalClass);
   generateNarrative(r,total,align,signalClass);
@@ -2099,95 +2140,168 @@ function narrOverall(r,total,align,cls){
 }
 
 function updateKoreaImpact(r){
+  const S=window.__stats, M=S&&S.kr_model;
+  const sgn=v=>(v>=0?'+':'')+v.toFixed(2)+'%';
+  const setBadge=(id,cls,txt)=>{const b=document.getElementById(id);b.className='kr-row-badge '+cls;b.textContent=txt};
+  const setVal=(id,html)=>{document.getElementById(id).innerHTML=html};
+
+  // 시가 갭: 최근 1년 회귀 (코스피 갭 = 절편 + 베타 × S&P500 등락)
   if(r.spxChg!=null){
-    const gap=r.spxChg*0.6;
-    document.getElementById('kr-gap').textContent=`예상 ${gap>=0?'+':''}${gap.toFixed(2)}% (베타 0.6)`;
-    const b=document.getElementById('kr-gap-badge');
-    if(gap>=0.5){b.className='kr-row-badge bull';b.textContent='갭상승'}
-    else if(gap<=-0.5){b.className='kr-row-badge bear';b.textContent='갭하락'}
-    else{b.className='kr-row-badge neutral';b.textContent='보합'}
+    const g=M?M.kospi_gap_spx:{beta:0.49,alpha:0.06,sigma:0.70};
+    const gap=g.alpha+g.beta*r.spxChg;
+    setVal('kr-gap',`${sgn(gap)} <span class="kr-range-note">±${g.sigma.toFixed(1)}% 안쪽이 보통 · 최근 1년 베타 ${g.beta.toFixed(2)}</span>`);
+    if(gap>=0.5)setBadge('kr-gap-badge','bull','갭상승');else if(gap<=-0.5)setBadge('kr-gap-badge','bear','갭하락');else setBadge('kr-gap-badge','neutral','보합');
   }
-  
+
   if(r.vix!=null){
     let txt,bcls,btxt;
     if(r.vix>=25||(r.vixChg!=null&&r.vixChg>=15)){txt='위험회피 우세 → 외인 매도 가능';bcls='bear';btxt='매도 우려'}
     else if(r.vix<=15&&r.vixChg!=null&&r.vixChg<=-5){txt='리스크온 회복 → 외인 매수 우호';bcls='bull';btxt='매수 우호'}
     else{txt='중립적 환경';bcls='neutral';btxt='중립'}
     document.getElementById('kr-foreign').textContent=txt;
-    const b=document.getElementById('kr-foreign-badge');b.className='kr-row-badge '+bcls;b.textContent=btxt;
+    setBadge('kr-foreign-badge',bcls,btxt);
   }
-  
-  if(r.spxChg!=null){
-    const semi=r.spxChg*1.8;
-    document.getElementById('kr-semi').textContent=`기대 ${semi>=0?'+':''}${semi.toFixed(2)}% (SOX 베타 1.8)`;
-    const b=document.getElementById('kr-semi-badge');
-    if(semi>=1){b.className='kr-row-badge bull';b.textContent='강세'}
-    else if(semi<=-1){b.className='kr-row-badge bear';b.textContent='약세'}
-    else{b.className='kr-row-badge neutral';b.textContent='보합'}
+
+  // 반도체: 필라델피아 반도체지수(SOX) 등락 그대로 보여줌
+  if(r.soxChg!=null){
+    setVal('kr-semi',`SOX ${sgn(r.soxChg)} <span class="kr-range-note">어젯밤 미국 반도체지수</span>`);
+    if(r.soxChg>=1)setBadge('kr-semi-badge','bull','강세');else if(r.soxChg<=-1)setBadge('kr-semi-badge','bear','약세');else setBadge('kr-semi-badge','neutral','보합');
+  } else if(r.spxChg!=null){
+    setVal('kr-semi','SOX 데이터 없음');setBadge('kr-semi-badge','neutral','--');
   }
-  
+
   if(r.vvix!=null){
     let txt,bcls,btxt;
     if(r.vvix>=110||(r.vix!=null&&r.vix>=25)){txt='큰 폭 변동 가능';bcls='bear';btxt='변동 확대'}
     else if(r.vvix<=85){txt='안정적 박스권 예상';bcls='bull';btxt='안정'}
     else{txt='평균적 변동성';bcls='neutral';btxt='보통'}
     document.getElementById('kr-volatility').textContent=txt;
-    const b=document.getElementById('kr-volatility-badge');b.className='kr-row-badge '+bcls;b.textContent=btxt;
+    setBadge('kr-volatility-badge',bcls,btxt);
   }
-  
-  // ========== v4.3: KOSPI 예상 일중 변동폭 ==========
+
+  // 예상 변동폭: 최근 1년, 같은 VIX 구간에서 코스피 (고가-저가)/전일종가 평균
   if(r.vix!=null){
-    const expectedRange = r.vix * 0.12;
-    let rangeText = `±${expectedRange.toFixed(1)}% 내외`;
-    // VIX 변동률 +20% 이상이면 확대 경향 추가
-    if(r.vixChg!=null && r.vixChg>=20){
-      rangeText += ' ⚠️ 확대 경향';
-    }
-    document.getElementById('kr-range').textContent = rangeText;
-    
-    const rangeBadge = document.getElementById('kr-range-badge');
-    if(r.vix<15){
-      rangeBadge.className='kr-row-badge neutral';rangeBadge.textContent='안정';
-    } else if(r.vix<25){
-      rangeBadge.className='kr-row-badge neutral';rangeBadge.textContent='보통';
-    } else {
-      rangeBadge.className='kr-row-badge bear';rangeBadge.textContent='확대';
-    }
-  } else {
-    document.getElementById('kr-range').textContent='--';
-    const rb=document.getElementById('kr-range-badge');rb.className='kr-row-badge neutral';rb.textContent='--';
+    let avg=null,basis='';
+    if(M){
+      const b=(M.range_by_vix||[]).find(x=>r.vix>=x.lo&&r.vix<x.hi&&x.n>=10);
+      if(b){avg=b.avg;basis=`최근 1년 VIX ${b.lo}~${b.hi>=999?'':b.hi} 구간 ${b.n}일 평균`}
+      else{avg=M.range_all;basis='최근 1년 전체 평균'}
+    } else {avg=r.vix*0.12;basis='임시 공식'}
+    setVal('kr-range',`고저폭 ${avg.toFixed(1)}% 내외 <span class="kr-range-note">${basis}</span>`);
+    const all=M?M.range_all:1.3;
+    if(avg<all*0.8)setBadge('kr-range-badge','neutral','안정');else if(avg>all*1.15)setBadge('kr-range-badge','bear','확대');else setBadge('kr-range-badge','neutral','보통');
+  } else {setVal('kr-range','--');setBadge('kr-range-badge','neutral','--')}
+
+  // 삼성전자·SK하이닉스 시가: SOX 있으면 SOX 회귀, 없으면 S&P 회귀
+  const stock=(id,badge,mSox,mSpx,fbBeta)=>{
+    let m=null,x=null,lab='';
+    if(M&&r.soxChg!=null){m=M[mSox];x=r.soxChg;lab='SOX'}
+    else if(M&&r.spxChg!=null){m=M[mSpx];x=r.spxChg;lab='S&P'}
+    else if(r.spxChg!=null){m={alpha:0,beta:fbBeta,sigma:1.5};x=r.spxChg;lab='S&P'}
+    if(!m){setVal(id,'--');setBadge(badge,'neutral','--');return}
+    const v=m.alpha+m.beta*x;
+    setVal(id,`${sgn(v)} <span class="kr-range-note">±${m.sigma.toFixed(1)}% · ${lab} 베타 ${m.beta.toFixed(2)}</span>`);
+    if(v>=0.3)setBadge(badge,'bull','상승');else if(v<=-0.3)setBadge(badge,'bear','하락');else setBadge(badge,'neutral','보합');
+  };
+  stock('kr-samsung','kr-samsung-badge','samsung_gap_sox','samsung_gap_spx',0.61);
+  stock('kr-hynix','kr-hynix-badge','hynix_gap_sox','hynix_gap_spx',0.86);
+
+  if(M&&M.window){
+    document.getElementById('kr-sub').textContent=`미국 마감 → 다음 날 한국 시가 · ${M.window.from} ~ ${M.window.to} (${M.window.sessions}거래일) 실측`;
   }
-  
-  // ========== v4.3: 삼성전자·SK하이닉스 예상 시가 갭 ==========
-  if(r.spxChg!=null && r.vix!=null){
-    // 삼성전자: spxChg × 1.3 + VIX≥25 시 -0.5
-    const samsungGap = (r.spxChg * 1.3) + (r.vix >= 25 ? -0.5 : 0);
-    const samsungStr = `${samsungGap>=0?'+':''}${samsungGap.toFixed(2)}%`;
-    document.getElementById('kr-samsung').textContent = samsungStr;
-    const sb = document.getElementById('kr-samsung-badge');
-    if(samsungGap >= 0.3){sb.className='kr-row-badge bull';sb.textContent='상승';}
-    else if(samsungGap <= -0.3){sb.className='kr-row-badge bear';sb.textContent='하락';}
-    else{sb.className='kr-row-badge neutral';sb.textContent='보합';}
-    
-    // SK하이닉스: spxChg × 1.6 + VIX≥25 시 -0.7
-    const hynixGap = (r.spxChg * 1.6) + (r.vix >= 25 ? -0.7 : 0);
-    const hynixStr = `${hynixGap>=0?'+':''}${hynixGap.toFixed(2)}%`;
-    document.getElementById('kr-hynix').textContent = hynixStr;
-    const hb = document.getElementById('kr-hynix-badge');
-    if(hynixGap >= 0.3){hb.className='kr-row-badge bull';hb.textContent='상승';}
-    else if(hynixGap <= -0.3){hb.className='kr-row-badge bear';hb.textContent='하락';}
-    else{hb.className='kr-row-badge neutral';hb.textContent='보합';}
-  } else {
-    document.getElementById('kr-samsung').textContent = '--';
-    document.getElementById('kr-hynix').textContent = '--';
-    const sb=document.getElementById('kr-samsung-badge');sb.className='kr-row-badge neutral';sb.textContent='--';
-    const hb=document.getElementById('kr-hynix-badge');hb.className='kr-row-badge neutral';hb.textContent='--';
+}
+
+/* ========== v5.0 - 15년 실측 성적표 ========== */
+const SIG_ORDER=['strong_bull','bull','neutral','bear','strong_bear'];
+const SIG_NAME={strong_bull:'강한 상방',bull:'약한 상방',neutral:'관망',bear:'약한 하방',strong_bear:'강한 하방',all:'전체 평균'};
+function sigKeyOf(total,align,n){
+  if(total>=6&&align>=4)return'strong_bull';
+  if(total>=3)return'bull';
+  if(total<=-6&&align>=4)return'strong_bear';
+  if(total<=-3)return'bear';
+  return'neutral';
+}
+async function loadStats(){
+  for(const u of ['/api/stats','/stats-fallback.json']){
+    try{
+      const res=await fetch(u,{cache:'no-store'});
+      if(!res.ok)continue;
+      const j=await res.json();
+      if(j&&j.signals){window.__stats=j;window.__statsSrc=u;renderMeasured();return}
+    }catch(e){}
   }
+  document.getElementById('score-take').textContent='성적표를 못 불러왔다. 잠시 뒤 🔄 새로고침.';
+}
+function cellUp(st,base){
+  if(!st)return'<td>--</td>';
+  const diff=base?st.up-base.up:0;
+  const cls=diff>=5?'up':diff<=-5?'dn':'';
+  return`<td class="${cls}">${st.up}%<small>${st.avg>=0?'+':''}${st.avg.toFixed(2)}%</small></td>`;
+}
+function compareWord(st,base){
+  const d=st.up-base.up;
+  if(d>=8)return'평소보다 확실히 높다';
+  if(d>=4)return'평소보다 조금 높다';
+  if(d<=-8)return'평소보다 확실히 낮다';
+  if(d<=-4)return'평소보다 조금 낮다';
+  return'평소랑 비슷하다';
+}
+function renderMeasured(){
+  const S=window.__stats;
+  if(!S)return;
+  const key=window.__sigKey;
+  const A=S.signals.all;
+
+  // 성적표 표
+  const rows=['all',...SIG_ORDER].map(k=>{
+    const x=S.signals[k];if(!x)return'';
+    const cls=k==='all'?'base':(k===key?'now':'');
+    const name=(k===key?'◉ ':'')+SIG_NAME[k];
+    const sub=k==='all'?`${x.days.toLocaleString()}일`:`${x.days}일 · ${x.events}번`;
+    return`<tr class="${cls}"><td>${name}<small>${sub}</small></td>${cellUp(x.kospi.next,k==='all'?null:A.kospi.next)}${cellUp(x.spx.d10,k==='all'?null:A.spx.d10)}${cellUp(x.kospi.d20,k==='all'?null:A.kospi.d20)}</tr>`;
+  }).join('');
+  document.getElementById('score-table').innerHTML=`<colgroup><col class="c0"><col><col><col></colgroup><thead><tr><th>시그널</th><th>코스피<br>다음날</th><th>S&amp;P500<br>2주 뒤</th><th>코스피<br>4주 뒤</th></tr></thead><tbody>${rows}</tbody>`;
+  document.getElementById('score-sub').textContent=`${S.period.from} ~ ${S.period.to} · ${S.period.days.toLocaleString()}거래일을 앱과 똑같은 채점으로 다시 매겼다`;
+
+  // 오늘 시그널 한 줄 해석
+  if(key&&S.signals[key]){
+    const x=S.signals[key];
+    const kn=x.kospi.next,s10=x.spx.d10,k20=x.kospi.d20;
+    let t=`<b>${SIG_NAME[key]}</b> 시그널은 15년 동안 ${x.days}일(사건 ${x.events}번) 떴다.<br>`;
+    t+=`그다음 날 코스피가 오른 확률은 <b>${kn.up}%</b>다(평소 ${A.kospi.next.up}%). ${compareWord(kn,A.kospi.next)}. `;
+    t+=`S&amp;P500이 2주 뒤 올라 있던 확률은 <b>${s10.up}%</b>다(평소 ${A.spx.d10.up}%). ${compareWord(s10,A.spx.d10)}. `;
+    t+=`코스피 4주 뒤는 <b>${k20.up}%</b>, 평균 ${k20.avg>=0?'+':''}${k20.avg.toFixed(2)}%다.`;
+    if(key==='strong_bull'||key==='bull'){
+      t+=`<br>→ 미국 공포가 커진 날이다. <b>한국은 다음 날 먼저 맞는 일이 많았고</b>, 반등은 2주 넘게 보고 받는 쪽이었다.`;
+    } else if(key==='strong_bear'){
+      t+=`<br>→ 다들 안심한 구간이다. 단기엔 큰 문제가 없었지만 <b>4주 시야로는 성적이 제일 약했다</b>.`;
+    }
+    document.getElementById('score-take').innerHTML=t;
+
+    // 히어로 확률 막대: 공식 → 실측
+    const setBar=(id,st,base)=>{
+      document.getElementById(id).style.width=st.up+'%';
+      document.getElementById(id+'-pct').textContent=`${st.up}% (평소 ${base.up}%)`;
+    };
+    setBar('conf-1',kn,A.kospi.next);
+    setBar('conf-2',x.spx.d5,A.spx.d5);
+    setBar('conf-3',s10,A.spx.d10);
+    document.getElementById('hero-basis').textContent=`2011년 이후 '${SIG_NAME[key]}' 시그널이 뜬 ${x.days}일의 실제 결과다. 예측이 아니라 과거 기록이다.`;
+  }
+
+  // 히트맵 칸마다 실측 한 줄
+  for(const q of ['LL','LH','HL','HH']){
+    const h=S.heatmap&&S.heatmap[q];const el=document.getElementById('tail-m-'+q);
+    if(!h||!el)continue;
+    el.textContent=`실측 ${h.days}일: 다음날 코스피 고저폭 ${h.kospi.range.avg.toFixed(1)}% · S&P 2주 뒤 오른 확률 ${h.spx.d10.up}%`;
+  }
+
+  if(window.__lastR)updateKoreaImpact(window.__lastR);
 }
 
 /* ========== 히스토리 ========== */
 function curKey(){return window.__mktDate||todayKey()}
-function curKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 
 /* ========== v4.2 - Fear-Greed Gauge ========== */
 function updateGauge(total){
@@ -2853,6 +2967,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 renderHistory();
 renderTimeline();
 fetchData();
+loadStats();
+setInterval(()=>{if(document.visibilityState==='visible')loadStats()},6*60*60*1000);
 </script>
 </body>
 </html>

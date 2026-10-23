@@ -16,7 +16,8 @@ const TARGETS = [
   { key: "vix3m", yahoo: "^VIX3M", cboe: "VIX3M" },
   { key: "vvix", yahoo: "^VVIX", cboe: "VVIX" },
   { key: "skew", yahoo: "^SKEW", cboe: "SKEW" },
-  { key: "spx", yahoo: "^GSPC", cboe: null as string | null },
+  { key: "spx", yahoo: "^GSPC", cboe: null as string | null, stooq: true },
+  { key: "sox", yahoo: "^SOX", cboe: null as string | null },
 ]
 
 const nyDate = (unixSec: number) =>
@@ -106,7 +107,7 @@ async function fromStooqSpx(): Promise<Bar[]> {
 // 한쪽이 막혀도 다른 쪽으로 돌아가고, 지표끼리 날짜가 어긋나는 일을 줄인다.
 async function load(t: (typeof TARGETS)[number]): Promise<Series | null> {
   const [base, yahoo] = await Promise.allSettled([
-    t.cboe ? fromCboe(t.cboe) : fromStooqSpx(),
+    t.cboe ? fromCboe(t.cboe) : "stooq" in t ? fromStooqSpx() : Promise.reject(new Error("no base")),
     fromYahoo(t.yahoo),
   ])
   const map = new Map<string, number>()
